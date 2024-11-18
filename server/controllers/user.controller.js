@@ -2,6 +2,8 @@ import User from "../models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
+import bcrypt from "bcryptjs";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -17,16 +19,16 @@ export const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "User with this email is already exists");
   }
 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   // Create new user
   const user = await User.create({
     username,
     email,
-    password,
+    password: hashedPassword,
   });
 
-  res.status(201).json({
-    success: true,
-    message: "User registered successfully",
-    user,
-  });
+  res
+    .status(200)
+    .json(new ApiResponse(200, user, "User Registered Successfully"));
 });

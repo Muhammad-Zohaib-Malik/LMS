@@ -39,9 +39,6 @@ export const registerUser = asyncHandler(async (req, res) => {
 
   const newUser = await User.findById(user._id).select("-password");
 
-  // Generate token upon registration
-  generateToken(res, newUser._id, `Welcome ${newUser.name}`);
-
   res
     .status(200)
     .json(new ApiResponse(200, newUser, "User Registered Successfully"));

@@ -74,3 +74,12 @@ export const logoutUser = asyncHandler(async (req, res) => {
   res.cookie("token", "", { maxAge: 0 });
   res.status(200).json(new ApiResponse(200, {}, "User Logout Successfully"));
 });
+
+export const getUserProfile = asyncHandler(async (req, res) => {
+  const userId = req.id;
+  const user = User.findById(userId).select("-password");
+
+  if (!user) throw new ApiError(400, "User Not Found");
+
+  res.status(200).json(new ApiResponse(200, user, ""));
+});

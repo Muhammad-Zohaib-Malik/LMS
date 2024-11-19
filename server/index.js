@@ -2,6 +2,7 @@ import express from "express";
 import connectDB from "./config/db.js";
 import { config } from "./config/config.js";
 import userRoutes from "./routes/user.route.js";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -10,15 +11,12 @@ connectDB();
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(cookieParser());
 const port = config.port || 3000;
 
 // Routes
 app.use("/api/users", userRoutes);
-
-// Basic route
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to the server!" });
-});
 
 // Start server
 app.listen(port, () => {

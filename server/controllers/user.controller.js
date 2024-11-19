@@ -73,13 +73,13 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 export const logoutUser = asyncHandler(async (_, res) => {
-  res.cookie("token", "", { maxAge: 0 });
+  res.cookie("jwt", "", { maxAge: 0 });
   res.status(200).json(new ApiResponse(200, {}, "User Logout Successfully"));
 });
 
 export const getUserProfile = asyncHandler(async (req, res) => {
   const userId = req.id;
-  const user = User.findById(userId).select("-password");
+  const user = await User.findById(userId).select("-password");
 
   if (!user) throw new ApiError(400, "Profile Not Found");
 

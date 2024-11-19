@@ -4,6 +4,8 @@ import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { generateToken } from "../utils/generateToken.js";
+import { deleteImageFromCloudinary } from "../utils/cloudinary.js";
+import fs from "fs";
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -70,7 +72,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, newUser, "Login Successfully"));
 });
 
-export const logoutUser = asyncHandler(async (req, res) => {
+export const logoutUser = asyncHandler(async (_, res) => {
   res.cookie("token", "", { maxAge: 0 });
   res.status(200).json(new ApiResponse(200, {}, "User Logout Successfully"));
 });
@@ -79,7 +81,31 @@ export const getUserProfile = asyncHandler(async (req, res) => {
   const userId = req.id;
   const user = User.findById(userId).select("-password");
 
-  if (!user) throw new ApiError(400, "User Not Found");
+  if (!user) throw new ApiError(400, "Profile Not Found");
 
   res.status(200).json(new ApiResponse(200, user, ""));
+});
+
+export const updateUserProfile = asyncHandler(async (req, res) => {
+  const userId = req.id;
+  const { name } = req.body;
+  const profilePic = req.file;
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(400, "User Not Found");
+
+  if (profilePic) {
+    await deleteImageFromCloudinary(user.profilePicId);
+    const { secure_url, public_id } = await uploadImage(profilePic.path);
+    user.profilePic = secure_url;
+    user.profilePicId = public_id;
+    fs.unlinkSync(profilePic.path);
+  }
+
+  user.name = name || user.name;
+  await user.save();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, user, "User Profile Updated Successfully"));
 });

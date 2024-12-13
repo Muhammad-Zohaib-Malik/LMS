@@ -1,20 +1,17 @@
 import { v2 as cloudinary } from "cloudinary";
+import { cloudinaryConfig } from "../config/cloudinaryConfig.js";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_CLOUD_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-export const uploadImage = async (localFilePath) => {
+export const uploadImage = async (profilePic) => {
   try {
+    cloudinaryConfig();
+
     if (!localFilePath) return null;
-    const result = await cloudinary.uploader.upload(localFilePath, {
+    const result = await cloudinary.uploader.upload(profilePic, {
       resource_type: "auto",
       folder: "LMS app",
     });
     return {
-      secureUrl: result.secure_url,
+      secure_url: result.secure_url,
       public_id: result.public_id,
     };
   } catch {

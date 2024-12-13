@@ -67,7 +67,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   const newUser = await User.findById(user._id).select("-password");
-  generateToken(res, newUser._id, `Welcome ${newUser.name}`);
+  generateToken(res, newUser._id);
 
   res.status(200).json(new ApiResponse(200, newUser, "Login Successfully"));
 });
@@ -78,7 +78,7 @@ export const logoutUser = asyncHandler(async (_, res) => {
 });
 
 export const getUserProfile = asyncHandler(async (req, res) => {
-  const userId = req.id;
+  const userId = req.user._id;
   const user = await User.findById(userId).select("-password");
 
   if (!user) throw new ApiError(400, "Profile Not Found");
@@ -87,7 +87,7 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 export const updateUserProfile = asyncHandler(async (req, res) => {
-  const userId = req.id;
+  const userId = req.user._id;
   const { name } = req.body;
   const profilePic = req.file;
 

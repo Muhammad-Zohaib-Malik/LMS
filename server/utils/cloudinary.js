@@ -5,7 +5,7 @@ export const uploadImage = async (profilePic) => {
   try {
     cloudinaryConfig();
 
-    if (!localFilePath) return null;
+    if (!profilePic) return null;
     const result = await cloudinary.uploader.upload(profilePic, {
       resource_type: "auto",
       folder: "LMS app",
@@ -22,10 +22,16 @@ export const uploadImage = async (profilePic) => {
 
 export const deleteImageFromCloudinary = async (profilePicId) => {
   try {
+    cloudinaryConfig();
+    if (!profilePicId) {
+      console.error("Profile Picture ID is missing. Skipping deletion.");
+      return null;
+    }
+    console.log("Deleting Image with public_id:", profilePicId);
     const result = await cloudinary.uploader.destroy(profilePicId);
     return result;
   } catch (error) {
     console.error("Error deleting image:", error);
     return null;
-  }
+  } 
 };

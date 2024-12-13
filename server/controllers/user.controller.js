@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { generateToken } from "../utils/generateToken.js";
-import { deleteImageFromCloudinary } from "../utils/cloudinary.js";
+import { deleteImageFromCloudinary, uploadImage } from "../utils/cloudinary.js";
 import fs from "fs";
 
 export const registerUser = asyncHandler(async (req, res) => {
@@ -88,24 +88,35 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 
 export const updateUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { name } = req.body;
+  const { name, password } = req.body;
   const profilePic = req.file;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("-password");
   if (!user) throw new ApiError(400, "User Not Found");
 
-  if (profilePic) {
-    await deleteImageFromCloudinary(user.profilePicId);
-    const { secure_url, public_id } = await uploadImage(profilePic.path);
-    user.profilePic = secure_url;
-    user.profilePicId = public_id;
-    fs.unlinkSync(profilePic.path);
+  if (password) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
   }
 
-  user.name = name || user.name;
-  await user.save();
+  try {
+    if (profilePic) {
+      if (user.profilePicId) {
+        await deleteImageFromCloudinary(user.profilePicId);
+      }
+      const { secure_url, public_id } = await uploadImage(profilePic.path);
+      user.profilePic = secure_url;
+      user.profilePicId = public_id;
+      fs.unlinkSync(profilePic.path);
+    }
+    user.name = name || user.name;
+    await user.save();
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, user, "User Profile Updated Successfully"));
+    res
+      .status(200)
+      .json(new ApiResponse(200, user, "User Profile Updated Successfully"));
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json(new ApiError(500, "Internal Server Error"));
+  }
 });
